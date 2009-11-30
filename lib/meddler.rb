@@ -6,12 +6,16 @@ require 'meddler/builder'
 class Meddler
 
   def initialize(app, on_request, on_response, before, after, wrapped_app)
-    wrapped_app.run(PostInterceptor.new(app, on_response, after, self.id.to_s.to_sym))
+    wrapped_app.run(PostInterceptor.new(app, on_response, after, signal))
     @app = PreInterceptor.new(wrapped_app.to_app, app, on_request, before)
   end
   
+  def signal
+    self.object_id.to_s.to_sym
+  end
+  
   def call(env)
-    response = catch(self.id.to_s.to_sym) do
+    response = catch(signal) do
       @app.call(env)
     end
     response
