@@ -24,7 +24,7 @@ class Meddler
       if @rule.nil? || @rule.call(response)
         response
       else
-        throw :skipped_middleware
+        throw :skipped_middleware, response
       end
     end
 
