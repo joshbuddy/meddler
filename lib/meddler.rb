@@ -6,12 +6,12 @@ require 'meddler/builder'
 class Meddler
 
   def initialize(app, on_request, on_response, before, after, wrapped_app)
-    wrapped_app.run(PostInterceptor.new(app, on_response, after))
+    wrapped_app.run(PostInterceptor.new(app, on_response, after, self.id.to_s.to_sym))
     @app = PreInterceptor.new(wrapped_app.to_app, app, on_request, before)
   end
   
   def call(env)
-    response = catch(:skipped_middleware) do
+    response = catch(self.id.to_s.to_sym) do
       @app.call(env)
     end
     response
@@ -19,11 +19,12 @@ class Meddler
   
 
   class PostInterceptor
-    attr_reader :app, :rules, :filters
-    def initialize(app, rules, filters)
+    attr_reader :app, :rules, :filters, :signal
+    def initialize(app, rules, filters, signal)
       @app = app
       @rules = rules
       @filters = filters
+      @signal = signal
     end
     
     def call(env)
@@ -33,7 +34,7 @@ class Meddler
         filters && filters.each{|f| f.call(response)}
         response.to_a
       else
-        throw :skipped_middleware, response.to_a
+        throw signal, response.to_a
       end
     end
 
