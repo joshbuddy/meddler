@@ -1,0 +1,22 @@
+= Meddler
+
+== Hey, someone meddled with my middleware!
+
+This lets you have on_request and on_response wrappers around a builder, and optionally skip them in either case.
+
+== Usage
+
+In your rackup file, do this:
+
+  require 'meddler'
+  use Meddler::Builder, :on_request => proc{|req| req.post?} do
+    use MungePostMiddleware
+  end
+
+Or, on response
+
+  require 'meddler'
+  use Meddler::Builder, :on_response => proc{|resp| resp.status == 200} do
+    use MiddlewareThatLikesOkThings
+  end
+
