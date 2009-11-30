@@ -1,15 +1,20 @@
+require 'rack'
+
+$: << File.dirname(__FILE__)
+require 'meddler/builder'
+
 class Meddler
 
-  attr_reader :middleware
-  
-  def initialize(app, before_rule, after_rule, middleware_class, *args, &blk)
-    @app = PreInterceptor.new(middleware_class.new(PostInterceptor.new(app, after_rule), *args, &blk), app, before_rule)
+  def initialize(app, before_rule, after_rule, wrapped_app)
+    wrapped_app.run(PostInterceptor.new(app, after_rule))
+    @app = PreInterceptor.new(wrapped_app.to_app, app, before_rule)
   end
   
   def call(env)
     response = catch(:skipped_middleware) do
       @app.call(env)
     end
+    response
   end
   
 
@@ -21,7 +26,7 @@ class Meddler
     
     def call(env)
       response = @app.call(env)
-      if @rule.nil? || @rule.call(response)
+      if @rule.nil? || @rule.call(Rack::Response.new(response))
         response
       else
         throw :skipped_middleware, response
@@ -40,7 +45,7 @@ class Meddler
     end
     
     def call(env)
-      response = @rule.nil? || @rule.call(env) ? @app.call(env) : @skip_app.call(env)
+      response = @rule.nil? || @rule.call(Rack::Request.new(env)) ? @app.call(env) : @skip_app.call(env)
     end
   end
   
