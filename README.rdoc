@@ -35,7 +35,7 @@ There's a few reasons you might want to do this.  One is that you may have an ex
     use AnotherExpensiveMiddleware
   end
 
-Or perhaps you want to give all of your developers Rack::Bug in production
+Or perhaps you want to give all of your developers Rack::Bug even in production.
 
   require 'meddler'
   use Meddler::Builder do
