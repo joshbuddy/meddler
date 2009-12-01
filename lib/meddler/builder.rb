@@ -1,7 +1,7 @@
 class Meddler
   class Builder
 
-    def initialize(app, rules = nil, &block)
+    def initialize(app, &block)
       @app = app
       @target = Rack::Builder.new{}
       instance_eval(&block)
