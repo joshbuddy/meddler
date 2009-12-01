@@ -24,3 +24,25 @@ Or, on response
     use MiddlewareThatLikesOkThings
   end
 
+=== Why?
+
+There's a few reasons you might want to do this.  One is that you may have an expensive sub stack that only needs to run on specifiec urls, or you may want to make something available only to part of the userbase.  Here's an example:
+
+  require 'meddler'
+  use Meddler::Builder do
+    on_request {|req| req.will_be_expensive? }
+    use ExpensiveMiddleware
+    use AnotherExpensiveMiddleware
+  end
+
+Or perhaps you want to give all of your developers Rack::Bug in production
+
+  require 'meddler'
+  use Meddler::Builder do
+    on_request do |req|
+      req.env['warden'].authenticate
+      user = req.env['warden'].user
+      user && user.staff_developer?
+    end
+    use Rack::Bug
+  end
