@@ -2,7 +2,7 @@
 
 == Hey, someone meddled with my middleware!
 
-This lets you have on_request and on_response wrappers around a builder, and optionally skip them in either case.
+This lets you have on_request and on_response wrappers around a builder, and optionally skip them in either case. It also gives you before and after even hooks, to do something else awesome before you proceed.
 
 == Usage
 
@@ -11,6 +11,7 @@ In your rackup file, do this:
   require 'meddler'
   use Meddler::Builder do
     on_request {|req| req.post?}
+    before {|req| puts "yup, we passed, and now we're onto passing in the request"}
     use MungePostMiddleware
   end
 
@@ -19,6 +20,7 @@ Or, on response
   require 'meddler'
   use Meddler::Builder do
     on_response {|resp| resp.status == 200}
+    after {|req| puts "yup, we passed, just about to pass the response back to the middleware stack in here"}
     use MiddlewareThatLikesOkThings
   end
 
