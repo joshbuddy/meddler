@@ -2,27 +2,7 @@
 
 == Hey, someone meddled with my middleware!
 
-This lets you have on_request and on_response wrappers around a builder, and optionally skip them in either case. It also gives you before and after even hooks, to do something else awesome before you proceed.
-
-== Usage
-
-In your rackup file, do this:
-
-  require 'meddler'
-  use Meddler::Builder do
-    on_request {|req| req.post?}
-    before {|req| puts "yup, we passed, and now we're onto passing in the request"}
-    use MungePostMiddleware
-  end
-
-Or, on response
-
-  require 'meddler'
-  use Meddler::Builder do
-    on_response {|resp| resp.status == 200}
-    after {|req| puts "yup, we passed, just about to pass the response back to the middleware stack in here"}
-    use MiddlewareThatLikesOkThings
-  end
+This lets you have +on_request+ and +on_response+ wrappers around a builder, and optionally skip them in either case. It also gives you before and after even hooks, to do something else awesome before you proceed.
 
 === Why?
 
@@ -46,3 +26,25 @@ Or perhaps you want to give all of your developers Rack::Bug even in production.
     end
     use Rack::Bug
   end
+
+== Usage
+
+In your rackup file, do this:
+
+  require 'meddler'
+  use Meddler::Builder do
+    on_request {|req| req.post?}
+    before {|req| puts "yup, we passed, and now we're onto passing in the request"}
+    use MungePostMiddleware
+  end
+
+Or, on response
+
+  require 'meddler'
+  use Meddler::Builder do
+    on_response {|resp| resp.status == 200}
+    after {|req| puts "yup, we passed, just about to pass the response back to the middleware stack in here"}
+    use MiddlewareThatLikesOkThings
+  end
+
+You can have as many +on_request+ and +on_response+ as you'd like, and processing will stop on the first one that returns false. +before+ and +after+ hooks will get called in order and be called with an instance of <tt>Rack::Request</tt> and <tt>Rack::Response</tt> respectively. 
