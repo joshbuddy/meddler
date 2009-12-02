@@ -1,27 +1,54 @@
 class Meddler
   class Builder
 
-    def initialize(app, &block)
-      @app = app
+    attr_reader :app, :target
+
+    def initialize(endpoint, &block)
       @target = Rack::Builder.new{}
       instance_eval(&block)
-      @meddler = Meddler.new(@app, @on_request, @on_response, @before, @after, @target)
+      @app = if @run_endpoint
+        Meddler.new(@run_endpoint, @on_request, @on_response, @before, @after, @target, endpoint)
+      else
+        Meddler.new(endpoint, @on_request, @on_response, @before, @after, @target)
+      end
     end
     
     def method_missing(method, *args, &block)
-      @target.send(method, *args, &block)
+      if method == :run
+        @run_endpoint = args.first
+      else
+        target.send(method, *args, &block)
+      end
+    end
+    
+    def add_to_on_request
+      (@on_request ||= []) << yield
+    end
+    
+    def add_to_on_response
+      (@on_response ||= []) << yield
     end
     
     def on_request(&block)
-      @on_request ||= []
-      @on_request << block
+      add_to_on_request { block }
     end
       
     def on_response(&block)
-      @on_response ||= []
-      @on_response << block
+      add_to_on_response { block }
     end
       
+    def on_status(status)
+      add_to_on_response { proc{|response| status === response.status } }
+    end
+      
+    def on_path_info(path_info)
+      add_to_on_request { proc{|request| path_info === request.path_info } }
+    end
+      
+    def on_xhr?(invert = false)
+      add_to_on_request { proc{|request| invert ^ request.xhr? } }
+    end
+    
     def before(&block)
       @before ||= []
       @before << block
@@ -33,7 +60,7 @@ class Meddler
     end
     
     def call(env)
-      @meddler.call(env)
+      app.call(env)
     end
 
   end
