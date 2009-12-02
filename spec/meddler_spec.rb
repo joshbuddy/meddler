@@ -38,7 +38,7 @@ describe Meddler do
     @builder = Meddler::Builder.new(@app) do
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
     TestMiddleware.last_instance.state.should == :post
   end
 
@@ -47,7 +47,7 @@ describe Meddler do
       on_request{|request| request.post? }
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
     TestMiddleware.last_instance.state.should == :initial
   end
 
@@ -57,7 +57,7 @@ describe Meddler do
       on_request{|request| request.path_info == '/' }
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/test'))
+    @builder.call(Rack::MockRequest.env_for('/test')).last.should == ['hello']
     TestMiddleware.last_instance.state.should == :initial
   end
 
@@ -66,7 +66,7 @@ describe Meddler do
       on_response{|response| response.status == 404 }
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
     TestMiddleware.last_instance.state.should == :pre
   end
 
@@ -75,7 +75,7 @@ describe Meddler do
       on_status 300..500
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
     TestMiddleware.last_instance.state.should == :pre
   end
 
@@ -84,7 +84,7 @@ describe Meddler do
       on_path_info '/path'
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
     TestMiddleware.last_instance.state.should == :initial
   end
 
@@ -93,7 +93,7 @@ describe Meddler do
       on_xhr?
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
     TestMiddleware.last_instance.state.should == :initial
   end
 
@@ -103,7 +103,7 @@ describe Meddler do
       on_response{|response| response.length == 10 }
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
     TestMiddleware.last_instance.state.should == :pre
   end
 
@@ -113,7 +113,8 @@ describe Meddler do
       before{|response| before_called = true}
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
+    TestMiddleware.last_instance.state.should == :post
     before_called.should be_true
   end
 
@@ -123,7 +124,8 @@ describe Meddler do
       after{|response| after_called = true}
       use TestMiddleware
     end
-    @builder.call(Rack::MockRequest.env_for('/'))
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
+    TestMiddleware.last_instance.state.should == :post
     after_called.should be_true
   end
 
@@ -133,8 +135,8 @@ describe Meddler do
       use TestMiddleware
       run proc {|env| [200, {'Content-type' => 'text/html', 'Content-length' => '10'}, ['hellohello']]}
     end
-    response = @builder.call(Rack::MockRequest.env_for('/'))
-    response.last.should == ['hellohello']
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hellohello']
+    TestMiddleware.last_instance.state.should == :post
   end
 
   it "should be able to act as an endpoint (which gets skipped)" do
@@ -144,8 +146,8 @@ describe Meddler do
       use TestMiddleware
       run proc {|env| [200, {'Content-type' => 'text/html', 'Content-length' => '10'}, ['hellohello']]}
     end
-    response = @builder.call(Rack::MockRequest.env_for('/'))
-    response.last.should == ['hello']
+    @builder.call(Rack::MockRequest.env_for('/')).last.should == ['hello']
+    TestMiddleware.last_instance.state.should == :pre
   end
 
 end

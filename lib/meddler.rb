@@ -7,10 +7,10 @@ class Meddler
 
   attr_reader :original_app, :app
 
-  def initialize(original_app, on_request, on_response, before, after, wrapped_app, skip_app = original_app)
+  def initialize(original_app, on_request, on_response, before, after, wrapped_app, skip_app = nil)
     @original_app, @skip_app = original_app, skip_app
-    wrapped_app.run(PostInterceptor.new(original_app, on_response, after, signal))
-    @app = PreInterceptor.new(wrapped_app.to_app, skip_app, on_request, before)
+    wrapped_app.run(PostInterceptor.new(skip_app || original_app, on_response, after, signal))
+    @app = PreInterceptor.new(wrapped_app.to_app, skip_app || original_app, on_request, before)
   end
   
   def signal
@@ -19,15 +19,15 @@ class Meddler
   
   def call(env)
     response = catch(signal) do
-      app.call(env)
+      app.call(env.dup)
     end
 
     if response.length == 4 && response.last == signal
       response.pop
-      if @skip_app != @original_app
-        @skip_app.call(env)
+      if !@skip_app.nil?
+        @original_app.call(env)
       else
-       response
+        response
       end
     else
       response

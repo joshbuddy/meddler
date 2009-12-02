@@ -6,11 +6,7 @@ class Meddler
     def initialize(endpoint, &block)
       @target = Rack::Builder.new{}
       instance_eval(&block)
-      @app = if @run_endpoint
-        Meddler.new(@run_endpoint, @on_request, @on_response, @before, @after, @target, endpoint)
-      else
-        Meddler.new(endpoint, @on_request, @on_response, @before, @after, @target)
-      end
+      @app = Meddler.new(endpoint, @on_request, @on_response, @before, @after, @target, @run_endpoint)
     end
     
     def method_missing(method, *args, &block)
